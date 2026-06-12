@@ -17,7 +17,7 @@ public class GeminiInterpreter {
     
     private static final Logger LOGGER = Logger.getLogger(GeminiInterpreter.class.getName());
     // Note: Verify your endpoint. gemini-1.5-flash is the current stable v1beta model.
-    private static final String API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=";
+    private static final String API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=";
     private static final int MAX_RETRIES = 4;
     private static final int BASE_DELAY_MS = 2000;
 
