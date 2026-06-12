@@ -3,6 +3,20 @@ import pandas as pd
 import joblib
 from pathlib import Path
 import subprocess
+import os
+import urllib.request
+
+# --- Java Dependency Setup ---
+# Automatically download Gson and compile the Java file when the app boots
+GSON_JAR = "gson-2.10.1.jar"
+if not os.path.exists(GSON_JAR):
+    urllib.request.urlretrieve("https://repo1.maven.org/maven2/com/google/code/gson/gson/2.10.1/gson-2.10.1.jar", GSON_JAR)
+
+if not os.path.exists("GeminiInterpreter.class"):
+    try:
+        subprocess.run(["javac", "-cp", GSON_JAR, "GeminiInterpreter.java"], check=True)
+    except subprocess.CalledProcessError as e:
+        st.error("Failed to compile Java microservice. Ensure default-jdk is in packages.txt.")
 
 # --- Configuration ---
 st.set_page_config(page_title="IEX Energy Forecaster", layout="wide")
@@ -60,9 +74,10 @@ with col2:
             pred_string = str(predictions.tolist())
             
             try:
-                # Triggers the standalone Java microservice 
+                # Run the compiled Java class using the proper classpath (-cp)
+                # The ".:" ensures it looks in the current directory for the class, and the jar for Gson
                 result = subprocess.run(
-                    ["java", "GeminiInterpreter.java", pred_string], 
+                    ["java", "-cp", f".:{GSON_JAR}", "GeminiInterpreter", pred_string], 
                     capture_output=True, 
                     text=True,
                     check=True
@@ -71,7 +86,7 @@ with col2:
             except subprocess.CalledProcessError as e:
                 st.error(f"Execution failed. Error: {e.stderr}")
             except Exception as e:
-                st.error(f"Failed to generate analysis. Ensure Java is installed and API key is set. Error: {e}")
+                st.error(f"System Error: {e}")
 
 # 3. Raw Data Preview
 st.subheader("Recent Input Features (Engineered)")
