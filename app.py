@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import joblib
 from pathlib import Path
+import subprocess
 
 # --- Configuration ---
 st.set_page_config(page_title="IEX Energy Forecaster", layout="wide")
@@ -45,12 +46,32 @@ with col1:
     st.subheader("Price Forecast Performance")
     st.line_chart(results)
 
-# 2. Metrics
+# 2. Metrics & Analysis
 with col2:
     st.subheader("Model Metrics")
     mae = (results["Actual Price"] - results["Predicted Price"]).abs().mean()
     st.metric("Mean Absolute Error (Test Set)", f"{mae:.2f} Rs/MWh")
     st.info("The model is utilizing 46 optimized features to generate these forecasts.")
+
+    # --- Gemini API Integration ---
+    st.subheader("Automated Market Analysis")
+    if st.button("Generate Executive Summary"):
+        with st.spinner("Analyzing price momentum..."):
+            pred_string = str(predictions.tolist())
+            
+            try:
+                # Triggers the standalone Java microservice 
+                result = subprocess.run(
+                    ["java", "GeminiInterpreter.java", pred_string], 
+                    capture_output=True, 
+                    text=True,
+                    check=True
+                )
+                st.success(result.stdout)
+            except subprocess.CalledProcessError as e:
+                st.error(f"Execution failed. Error: {e.stderr}")
+            except Exception as e:
+                st.error(f"Failed to generate analysis. Ensure Java is installed and API key is set. Error: {e}")
 
 # 3. Raw Data Preview
 st.subheader("Recent Input Features (Engineered)")
